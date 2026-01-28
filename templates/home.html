@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Boston House Price Prediction</title>
+  <link href='https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap' rel='stylesheet'>
+  
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: absolute;
+      width: 400px;
+      height: 400px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 50%;
+      top: -100px;
+      left: -100px;
+      animation: float 6s ease-in-out infinite;
+    }
+
+    body::after {
+      content: '';
+      position: absolute;
+      width: 300px;
+      height: 300px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 50%;
+      bottom: -80px;
+      right: -80px;
+      animation: float 8s ease-in-out infinite reverse;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(20px); }
+    }
+
+    .container {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      padding: 40px;
+      max-width: 900px;
+      width: 100%;
+      position: relative;
+      z-index: 1;
+      animation: slideIn 0.6s ease-out;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    h1 {
+      text-align: center;
+      color: #667eea;
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #666;
+      font-size: 1rem;
+      margin-bottom: 30px;
+      font-weight: 300;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .input-group {
+      position: relative;
+    }
+
+    .input-group label {
+      display: block;
+      font-size: 0.85rem;
+      color: #555;
+      margin-bottom: 5px;
+      font-weight: 500;
+      transition: color 0.3s;
+    }
+
+    .input-group input {
+      width: 100%;
+      padding: 12px 15px;
+      border: 2px solid #e0e0e0;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-family: 'Poppins', sans-serif;
+      transition: all 0.3s ease;
+      background: white;
+    }
+
+    .input-group input:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+      transform: translateY(-2px);
+    }
+
+    .input-group input:focus + .input-icon {
+      color: #667eea;
+    }
+
+    .input-group:hover label {
+      color: #667eea;
+    }
+
+    button {
+      width: 100%;
+      padding: 15px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+      font-family: 'Poppins', sans-serif;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(102, 126, 234, 0.6);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    .prediction-result {
+      margin-top: 30px;
+      padding: 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 15px;
+      text-align: center;
+      color: white;
+      font-size: 1.3rem;
+      font-weight: 600;
+      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+      animation: fadeIn 0.5s ease-out;
+      display: none;
+    }
+
+    .prediction-result.show {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: scale(0.9);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    .tooltip {
+      position: relative;
+      display: inline-block;
+      margin-left: 5px;
+      cursor: help;
+      color: #667eea;
+      font-weight: 600;
+    }
+
+    .tooltip:hover::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: 125%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #333;
+      color: white;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      white-space: nowrap;
+      z-index: 10;
+      font-weight: 400;
+    }
+
+    .tooltip:hover::before {
+      content: '';
+      position: absolute;
+      bottom: 115%;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 6px solid transparent;
+      border-top-color: #333;
+    }
+
+    .feature-info {
+      background: #f8f9ff;
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      border-left: 4px solid #667eea;
+    }
+
+    .feature-info h3 {
+      color: #667eea;
+      font-size: 1rem;
+      margin-bottom: 8px;
+    }
+
+    .feature-info p {
+      color: #666;
+      font-size: 0.85rem;
+      line-height: 1.5;
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        padding: 25px;
+      }
+
+      h1 {
+        font-size: 1.8rem;
+      }
+
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .loading {
+      display: none;
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    .loading.show {
+      display: block;
+    }
+
+    .spinner {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #667eea;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>🏠 Boston House Price Prediction</h1>
+    <p class="subtitle">Enter the property details below to predict the house price</p>
+
+    <div class="feature-info">
+      <h3>ℹ️ About the Features</h3>
+      <p>This model uses 13 key features to predict house prices in Boston. Hover over the question marks for more information about each feature.</p>
+    </div>
+
+    <form action="{{ url_for('predict') }}" method="post" id="predictionForm">
+      <div class="form-grid">
+        <div class="input-group">
+          <label>CRIM <span class="tooltip" data-tooltip="Per capita crime rate by town">?</span></label>
+          <input type="number" step="any" name="CRIM" placeholder="e.g., 0.00632" required>
+        </div>
+
+        <div class="input-group">
+          <label>ZN <span class="tooltip" data-tooltip="Proportion of residential land zoned for lots over 25,000 sq.ft">?</span></label>
+          <input type="number" step="any" name="ZN" placeholder="e.g., 18.0" required>
+        </div>
+
+        <div class="input-group">
+          <label>INDUS <span class="tooltip" data-tooltip="Proportion of non-retail business acres per town">?</span></label>
+          <input type="number" step="any" name="INDUS" placeholder="e.g., 2.31" required>
+        </div>
+
+        <div class="input-group">
+          <label>CHAS <span class="tooltip" data-tooltip="Charles River dummy variable (1 if bounds river; 0 otherwise)">?</span></label>
+          <input type="number" step="any" name="CHAS" placeholder="0 or 1" required>
+        </div>
+
+        <div class="input-group">
+          <label>NOX <span class="tooltip" data-tooltip="Nitric oxides concentration (parts per 10 million)">?</span></label>
+          <input type="number" step="any" name="NOX" placeholder="e.g., 0.538" required>
+        </div>
+
+        <div class="input-group">
+          <label>RM <span class="tooltip" data-tooltip="Average number of rooms per dwelling">?</span></label>
+          <input type="number" step="any" name="RM" placeholder="e.g., 6.575" required>
+        </div>
+
+        <div class="input-group">
+          <label>Age <span class="tooltip" data-tooltip="Proportion of owner-occupied units built prior to 1940">?</span></label>
+          <input type="number" step="any" name="Age" placeholder="e.g., 65.2" required>
+        </div>
+
+        <div class="input-group">
+          <label>DIS <span class="tooltip" data-tooltip="Weighted distances to five Boston employment centres">?</span></label>
+          <input type="number" step="any" name="DIS" placeholder="e.g., 4.09" required>
+        </div>
+
+        <div class="input-group">
+          <label>RAD <span class="tooltip" data-tooltip="Index of accessibility to radial highways">?</span></label>
+          <input type="number" step="any" name="RAD" placeholder="e.g., 1" required>
+        </div>
+
+        <div class="input-group">
+          <label>TAX <span class="tooltip" data-tooltip="Full-value property-tax rate per $10,000">?</span></label>
+          <input type="number" step="any" name="TAX" placeholder="e.g., 296" required>
+        </div>
+
+        <div class="input-group">
+          <label>PTRATIO <span class="tooltip" data-tooltip="Pupil-teacher ratio by town">?</span></label>
+          <input type="number" step="any" name="PTRATIO" placeholder="e.g., 15.3" required>
+        </div>
+
+        <div class="input-group">
+          <label>B <span class="tooltip" data-tooltip="1000(Bk - 0.63)^2 where Bk is the proportion of Black residents">?</span></label>
+          <input type="number" step="any" name="B" placeholder="e.g., 396.9" required>
+        </div>
+
+        <div class="input-group">
+          <label>LSTAT <span class="tooltip" data-tooltip="% lower status of the population">?</span></label>
+          <input type="number" step="any" name="LSTAT" placeholder="e.g., 4.98" required>
+        </div>
+      </div>
+
+      <button type="submit">🔮 Predict House Price</button>
+    </form>
+
+    <div class="loading" id="loading">
+      <div class="spinner"></div>
+      <p style="margin-top: 10px; color: #667eea; font-weight: 500;">Calculating prediction...</p>
+    </div>
+
+    <div class="prediction-result" id="predictionResult">
+      {{prediction_text}}
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('predictionForm').addEventListener('submit', function() {
+      document.getElementById('loading').classList.add('show');
+    });
+    window.addEventListener('DOMContentLoaded', function() {
+      const resultDiv = document.getElementById('predictionResult');
+      if (resultDiv.textContent.trim() !== '') {
+        resultDiv.classList.add('show');
+        document.getElementById('loading').classList.remove('show');
+      }
+    });
+    document.querySelectorAll('input').forEach(input => {
+      input.addEventListener('focus', function() {
+        this.parentElement.style.transform = 'translateY(-2px)';
+      });
+      
+      input.addEventListener('blur', function() {
+        this.parentElement.style.transform = 'translateY(0)';
+      });
+    });
+  </script>
+</body>
+
+</html>
